@@ -1,10 +1,13 @@
 package main
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"fmt"
+	"io"
 )
 
 func main() {
@@ -34,6 +37,26 @@ func main() {
 	}
 	fmt.Println("--- Password")
 	fmt.Printf("%d: %v\n", pwLen, password)
+
+	// Encrypt message with password using AES.
+	fmt.Println("--- AES message")
+	message := []byte("Michael")
+	aes, err := aes.NewCipher(password)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	gcm, err := cipher.NewGCM(aes)
+	// if any error generating new GCM
+	// handle them
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	io.ReadFull(rng, nonce)
+	message = gcm.Seal(message[:0], nonce, message, nil)
+	fmt.Println(message)
 
 	// Encrypt password (for large messages) using public key.
 	fmt.Println("--- Encrypting")

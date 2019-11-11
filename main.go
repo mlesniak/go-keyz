@@ -6,8 +6,11 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io"
+	"os"
 )
 
 func main() {
@@ -21,12 +24,27 @@ func main() {
 	fmt.Println(pub.E)
 	fmt.Println(pub.N)
 
+	// Convert public key.
+	fmt.Println("--- Public PEM key")
+	publicBlock := &pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: x509.MarshalPKCS1PublicKey(&pub),
+	}
+	pem.Encode(os.Stdout, publicBlock)
+
 	// Display private key.
 	fmt.Println("--- Private")
 	fmt.Println(key.D)
 	for _, prime := range key.Primes {
 		fmt.Println(prime)
 	}
+	// Convert private key.
+	fmt.Println("--- Private PEM key")
+	privateBlock := &pem.Block{
+		Type:  "PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	}
+	pem.Encode(os.Stdout, privateBlock)
 
 	// Generate random password.
 	password := make([]byte, 32)

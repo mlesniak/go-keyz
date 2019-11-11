@@ -58,6 +58,15 @@ func main() {
 	message = gcm.Seal(message[:0], nonce, message, nil)
 	fmt.Println(message)
 
+	// Demo: decrypt directly
+	fmt.Println("--- AES message (decrypted)")
+	plain, err := gcm.Open(message[:0], nonce, message, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(plain))
+
 	// Encrypt password (for large messages) using public key.
 	fmt.Println("--- Encrypting")
 	secretMessage := password

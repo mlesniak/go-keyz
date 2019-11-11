@@ -41,12 +41,12 @@ func main() {
 	// Encrypt message with password using AES.
 	fmt.Println("--- AES message")
 	message := []byte("Michael")
-	aes, err := aes.NewCipher(password)
+	algorithm, err := aes.NewCipher(password)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	gcm, err := cipher.NewGCM(aes)
+	gcm, err := cipher.NewGCM(algorithm)
 	// if any error generating new GCM
 	// handle them
 	if err != nil {
@@ -55,12 +55,13 @@ func main() {
 	}
 	nonce := make([]byte, gcm.NonceSize())
 	io.ReadFull(rng, nonce)
-	message = gcm.Seal(message[:0], nonce, message, nil)
+	message = gcm.Seal(nonce, nonce, message, nil)
 	fmt.Println(message)
 
 	// Demo: decrypt directly
 	fmt.Println("--- AES message (decrypted)")
-	plain, err := gcm.Open(message[:0], nonce, message, nil)
+	nonce, message = message[:gcm.NonceSize()], message[gcm.NonceSize():]
+	plain, err := gcm.Open(nil, nonce, message, nil)
 	if err != nil {
 		fmt.Println(err)
 		return

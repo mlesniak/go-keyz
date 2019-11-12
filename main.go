@@ -14,11 +14,17 @@ import (
 	"os"
 )
 
-func main() {
+func GenerateKey(bitSize int) (rsa.PublicKey, rsa.PrivateKey) {
 	rng := rand.Reader
-
-	key, _ := rsa.GenerateKey(rng, 1024)
+	key, _ := rsa.GenerateKey(rng, bitSize)
 	pub := key.PublicKey
+	return pub, *key
+}
+
+func main() {
+	pub, key := GenerateKey(1024)
+
+	rng := rand.Reader
 
 	// Display public key.
 	fmt.Println("--- Public")
@@ -45,7 +51,7 @@ func main() {
 	fmt.Println("--- Private PEM key")
 	privateBlock := &pem.Block{
 		Type:  "PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(key),
+		Bytes: x509.MarshalPKCS1PrivateKey(&key),
 	}
 	pem.Encode(os.Stdout, privateBlock)
 
@@ -101,7 +107,7 @@ func main() {
 
 	// Decrypt password using private key.
 	fmt.Println("--- Decrypting")
-	plaintext, err := rsa.DecryptOAEP(sha256.New(), nil, key, ciphertext, nil)
+	plaintext, err := rsa.DecryptOAEP(sha256.New(), nil, &key, ciphertext, nil)
 	if err != nil {
 		fmt.Println(err)
 		return

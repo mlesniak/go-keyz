@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -30,7 +31,9 @@ func main() {
 		Type:  "PUBLIC KEY",
 		Bytes: x509.MarshalPKCS1PublicKey(&pub),
 	}
-	pem.Encode(os.Stdout, publicBlock)
+	var buffer bytes.Buffer
+	pem.Encode(&buffer, publicBlock)
+	fmt.Println(buffer.String())
 
 	// Display private key.
 	fmt.Println("--- Private")

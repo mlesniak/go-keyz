@@ -48,17 +48,10 @@ func main() {
 	privatePEM := PrivateKeyPEM(key)
 	fmt.Println(privatePEM)
 
-	rng := rand.Reader
-
 	// Generate random password.
-	password := make([]byte, 32)
-	pwLen, err := rng.Read(password)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	password := NewRandomPassword()
 	fmt.Println("--- Password")
-	fmt.Printf("%d: %v\n", pwLen, password)
+	fmt.Printf("%v\n", password)
 
 	// Encrypt message with password using AES.
 	fmt.Println("--- AES message")
@@ -75,6 +68,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	rng := rand.Reader
 	nonce := make([]byte, gcm.NonceSize())
 	io.ReadFull(rng, nonce)
 	message = gcm.Seal(nonce, nonce, message, nil)
@@ -108,4 +102,13 @@ func main() {
 		return
 	}
 	fmt.Println(plaintext)
+}
+
+func NewRandomPassword() []byte {
+	password := make([]byte, 32)
+	_, err := rand.Reader.Read(password)
+	if err != nil {
+		panic(err)
+	}
+	return password
 }

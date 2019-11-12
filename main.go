@@ -11,7 +11,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
-	"os"
 )
 
 func GenerateKey(bitSize int) (rsa.PublicKey, rsa.PrivateKey) {
@@ -21,39 +20,35 @@ func GenerateKey(bitSize int) (rsa.PublicKey, rsa.PrivateKey) {
 	return pub, *key
 }
 
-func main() {
-	pub, key := GenerateKey(1024)
-
-	rng := rand.Reader
-
-	// Display public key.
-	fmt.Println("--- Public")
-	fmt.Println(pub.E)
-	fmt.Println(pub.N)
-
-	// Convert public key.
-	fmt.Println("--- Public PEM key")
+func PublicKeyPEM(key rsa.PublicKey) string {
 	publicBlock := &pem.Block{
 		Type:  "PUBLIC KEY",
-		Bytes: x509.MarshalPKCS1PublicKey(&pub),
+		Bytes: x509.MarshalPKCS1PublicKey(&key),
 	}
 	var buffer bytes.Buffer
 	pem.Encode(&buffer, publicBlock)
-	fmt.Println(buffer.String())
+	return buffer.String()
+}
 
-	// Display private key.
-	fmt.Println("--- Private")
-	fmt.Println(key.D)
-	for _, prime := range key.Primes {
-		fmt.Println(prime)
-	}
-	// Convert private key.
-	fmt.Println("--- Private PEM key")
-	privateBlock := &pem.Block{
+func PrivateKeyPEM(key rsa.PrivateKey) string {
+	publicBlock := &pem.Block{
 		Type:  "PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(&key),
 	}
-	pem.Encode(os.Stdout, privateBlock)
+	var buffer bytes.Buffer
+	pem.Encode(&buffer, publicBlock)
+	return buffer.String()
+}
+
+func main() {
+	pub, key := GenerateKey(1024)
+
+	publicPEM := PublicKeyPEM(pub)
+	fmt.Println(publicPEM)
+	privatePEM := PrivateKeyPEM(key)
+	fmt.Println(privatePEM)
+
+	rng := rand.Reader
 
 	// Generate random password.
 	password := make([]byte, 32)

@@ -40,51 +40,72 @@ func PrivateKeyPEM(key rsa.PrivateKey) string {
 	return buffer.String()
 }
 
+func EncryptSymmetric(message []byte) (password []byte, nonceSize int, data []byte) {
+	password = NewRandomPassword()
+
+	// Create AES instance using random password.
+	algorithm, err := aes.NewCipher(password)
+	if err != nil {
+		panic(err)
+	}
+
+	// Create corresponding block encryption.
+	gcm, err := cipher.NewGCM(algorithm)
+	if err != nil {
+		panic(err)
+	}
+
+	// Create random nonce and prepend it to the message.
+	nonceSize = gcm.NonceSize()
+	nonce := make([]byte, nonceSize)
+	io.ReadFull(rand.Reader, nonce)
+
+	// EncryptSymmetric
+	data = gcm.Seal(nonce, nonce, message, nil)
+	return
+}
+
 func main() {
 	pub, key := GenerateKey(1024)
 
-	publicPEM := PublicKeyPEM(pub)
-	fmt.Println(publicPEM)
-	privatePEM := PrivateKeyPEM(key)
-	fmt.Println(privatePEM)
+	//publicPEM := PublicKeyPEM(pub)
+	//privatePEM := PrivateKeyPEM(key)
 
-	// Generate random password.
-	password := NewRandomPassword()
-	fmt.Println("--- Password")
-	fmt.Printf("%v\n", password)
+	password, nonceSize, message := EncryptSymmetric([]byte("Michael"))
+	fmt.Println(password, nonceSize, message)
 
-	// Encrypt message with password using AES.
-	fmt.Println("--- AES message")
-	message := []byte("Michael")
-	algorithm, err := aes.NewCipher(password)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	gcm, err := cipher.NewGCM(algorithm)
-	// if any error generating new GCM
-	// handle them
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	//// EncryptSymmetric message with password using AES.
+	//fmt.Println("--- AES message")
+	//message :=
+	//algorithm, err := aes.NewCipher(password)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//gcm, err := cipher.NewGCM(algorithm)
+	//// if any error generating new GCM
+	//// handle them
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
 	rng := rand.Reader
-	nonce := make([]byte, gcm.NonceSize())
-	io.ReadFull(rng, nonce)
-	message = gcm.Seal(nonce, nonce, message, nil)
-	fmt.Println(message)
+	//nonce := make([]byte, gcm.NonceSize())
+	//io.ReadFull(rng, nonce)
+	//message = gcm.Seal(nonce, nonce, message, nil)
+	//fmt.Println(message)
 
 	// Demo: decrypt directly
-	fmt.Println("--- AES message (decrypted)")
-	nonce, message = message[:gcm.NonceSize()], message[gcm.NonceSize():]
-	plain, err := gcm.Open(nil, nonce, message, nil)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(string(plain))
+	//fmt.Println("--- AES message (decrypted)")
+	//nonce, message := message[:nonceSize], message[nonceSize:]
+	//plain, err := gcm.Open(nil, nonce, message, nil)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//fmt.Println(string(plain))
 
-	// Encrypt password (for large messages) using public key.
+	// EncryptSymmetric password (for large messages) using public key.
 	fmt.Println("--- Encrypting")
 	secretMessage := password
 	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rng, &pub, secretMessage, nil)

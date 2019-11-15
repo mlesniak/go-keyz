@@ -104,18 +104,28 @@ func DecryptAsymmetric(message []byte, key rsa.PrivateKey) []byte {
 	return plaintext
 }
 
+// Message in -> encrypted data out
+type EncryptedData struct {
+	data              []byte // Protected by AES.
+	encryptedPassword []byte // Protected by private key.
+	nonceSize         int
+}
+
 func main() {
-	pub, key := GenerateKey(1024)
+	//pub, key := GenerateKey(1024)
+	//
+	//password, nonceSize, data := EncryptSymmetric([]byte("Michael"))
+	//fmt.Println(password, nonceSize, data)
+	//
+	//ciphertext := EncryptAsymmetric(password, pub)
+	//fmt.Println(ciphertext)
+	//
+	//// data, nonceSize, encryptedPassword
+	//
+	//plaintext := DecryptAsymmetric(ciphertext, key)
+	//fmt.Println(plaintext)
+	//
+	//submittedMessage := DecryptSymmetric(data, nonceSize, plaintext)
+	//fmt.Println(string(submittedMessage))
 
-	password, nonceSize, data := EncryptSymmetric([]byte("Michael"))
-	fmt.Println(password, nonceSize, data)
-
-	ciphertext := EncryptAsymmetric(password, pub)
-	fmt.Println(ciphertext)
-
-	plaintext := DecryptAsymmetric(ciphertext, key)
-	fmt.Println(plaintext)
-
-	submittedMessage := DecryptSymmetric(data, nonceSize, plaintext)
-	fmt.Println(string(submittedMessage))
 }

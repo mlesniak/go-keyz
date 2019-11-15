@@ -10,6 +10,7 @@ import (
 	"crypto/x509"
 	"encoding/gob"
 	"encoding/pem"
+	"flag"
 	"fmt"
 	"io"
 )
@@ -34,20 +35,20 @@ func GenerateKey(bitSize int) (rsa.PublicKey, rsa.PrivateKey) {
 	return pub, *key
 }
 
-func PublicKeyPEM(key rsa.PublicKey) string {
+func PublicKeyPEM(key *rsa.PublicKey) string {
 	publicBlock := &pem.Block{
 		Type:  "PUBLIC KEY",
-		Bytes: x509.MarshalPKCS1PublicKey(&key),
+		Bytes: x509.MarshalPKCS1PublicKey(key),
 	}
 	var buffer bytes.Buffer
 	pem.Encode(&buffer, publicBlock)
 	return buffer.String()
 }
 
-func PrivateKeyPEM(key rsa.PrivateKey) string {
+func PrivateKeyPEM(key *rsa.PrivateKey) string {
 	publicBlock := &pem.Block{
 		Type:  "PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(&key),
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
 	}
 	var buffer bytes.Buffer
 	pem.Encode(&buffer, publicBlock)
@@ -144,11 +145,24 @@ func Decrypt(data []byte, key *rsa.PrivateKey) []byte {
 }
 
 func main() {
-	pub, priv := GenerateKey(1024)
+	//pub, priv := GenerateKey(1024)
+	//
+	//b := Encrypt([]byte("Hello, world!"), &pub)
+	//fmt.Println(b)
+	//
+	//message := Decrypt(b, &priv)
+	//fmt.Println(string(message))
 
-	b := Encrypt([]byte("Hello, world!"), &pub)
-	fmt.Println(b)
+	var keygen bool
+	flag.BoolVar(&keygen, "k", false, "Create a new key pair")
+	flag.Parse()
 
-	message := Decrypt(b, &priv)
-	fmt.Println(string(message))
+	if keygen {
+		pub, priv := GenerateKey(1024)
+		fmt.Println(PublicKeyPEM(&pub))
+		fmt.Println(PrivateKeyPEM(&priv))
+		return
+	}
+
+	flag.Usage()
 }

@@ -11,7 +11,9 @@ import (
 	"encoding/gob"
 	"encoding/pem"
 	"flag"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 )
 
@@ -53,6 +55,28 @@ func PrivateKeyPEM(key *rsa.PrivateKey) string {
 	var buffer bytes.Buffer
 	pem.Encode(&buffer, publicBlock)
 	return buffer.String()
+}
+
+func ReadPrivateKey(data []byte) *rsa.PrivateKey {
+	block, _ := pem.Decode(data)
+	fmt.Println(block)
+
+	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		panic(err)
+	}
+
+	return key
+}
+
+func ReadPublicKey(data []byte) *rsa.PublicKey {
+	block, _ := pem.Decode(data)
+	key, err := x509.ParsePKCS1PublicKey(block.Bytes)
+	if err != nil {
+		panic(err)
+	}
+
+	return key
 }
 
 func EncryptSymmetric(message []byte) (password []byte, nonceSize int, data []byte) {
@@ -155,6 +179,10 @@ func main() {
 
 	var keygen bool
 	flag.BoolVar(&keygen, "k", false, "Create a new key pair")
+	var encrypt bool
+	flag.BoolVar(&encrypt, "e", false, "Encrypt from stdin")
+	var publicKeyName string
+	flag.StringVar(&publicKeyName, "p", "", "Public key file name for encryption")
 	flag.Parse()
 
 	if keygen {
@@ -173,6 +201,29 @@ func main() {
 		}
 		privFile.WriteString(PrivateKeyPEM(&priv))
 		privFile.Close()
+
+		return
+	}
+
+	if encrypt {
+		if publicKeyName == "" {
+			flag.Usage()
+			return
+		}
+
+		pemPublicKey, err := ioutil.ReadFile(publicKeyName)
+		if err != nil {
+			panic(err)
+		}
+		publicKey := ReadPublicKey(pemPublicKey)
+
+		bs, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			panic(err)
+		}
+
+		i := Encrypt(bs, publicKey)
+		os.Stdout.Write(i)
 
 		return
 	}

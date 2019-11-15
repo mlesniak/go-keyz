@@ -112,8 +112,22 @@ type EncryptedData struct {
 	NonceSize         int
 }
 
+func Encrypt(data []byte, key rsa.PublicKey) []byte {
+	password, nonceSize, data := EncryptSymmetric(data)
+	encryptedPassword := EncryptAsymmetric(password, key)
+
+	ed := EncryptedData{data, encryptedPassword, nonceSize}
+	var buffer bytes.Buffer
+	enc := gob.NewEncoder(&buffer)
+	err := enc.Encode(ed)
+	if err != nil {
+		panic(err)
+	}
+	return buffer.Bytes()
+}
+
 func main() {
-	//pub, key := GenerateKey(1024)
+	pub, _ := GenerateKey(1024)
 	//
 	//password, nonceSize, data := EncryptSymmetric([]byte("Michael"))
 	//fmt.Println(password, nonceSize, data)
@@ -130,30 +144,33 @@ func main() {
 	//fmt.Println(string(submittedMessage))
 
 	// 17
-	e := EncryptedData{
-		[]byte("Hello"),    // 5
-		[]byte("Password"), // 8
-		10,                 // 4
-	}
+	//e := EncryptedData{
+	//	[]byte("Hello"),    // 5
+	//	[]byte("Password"), // 8
+	//	10,                 // 4
+	//}
+	//
+	//fmt.Println(e)
+	//
+	//var buffer bytes.Buffer
+	//enc := gob.NewEncoder(&buffer)
+	//err := enc.Encode(e)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	////fmt.Println(buffer.Bytes())
+	////fmt.Println(len(buffer.Bytes()))
+	//
+	//dec := gob.NewDecoder(&buffer)
+	//var r EncryptedData
+	//err = dec.Decode(&r)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//fmt.Println(r)
+	//fmt.Println(string(r.Data))
 
-	fmt.Println(e)
-
-	var buffer bytes.Buffer
-	enc := gob.NewEncoder(&buffer)
-	err := enc.Encode(e)
-	if err != nil {
-		panic(err)
-	}
-
-	//fmt.Println(buffer.Bytes())
-	//fmt.Println(len(buffer.Bytes()))
-
-	dec := gob.NewDecoder(&buffer)
-	var r EncryptedData
-	err = dec.Decode(&r)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(r)
-	fmt.Println(string(r.Data))
+	b := Encrypt([]byte("Hello, world!"), pub)
+	fmt.Println(b)
 }

@@ -11,8 +11,8 @@ import (
 	"encoding/gob"
 	"encoding/pem"
 	"flag"
-	"fmt"
 	"io"
+	"os"
 )
 
 // TODO Data structures
@@ -159,8 +159,21 @@ func main() {
 
 	if keygen {
 		pub, priv := GenerateKey(1024)
-		fmt.Println(PublicKeyPEM(&pub))
-		fmt.Println(PrivateKeyPEM(&priv))
+
+		pubFile, err := os.Create("public.key")
+		if err != nil {
+			panic(err)
+		}
+		pubFile.WriteString(PublicKeyPEM(&pub))
+		pubFile.Close()
+
+		privFile, err := os.Create("private.key")
+		if err != nil {
+			panic(err)
+		}
+		privFile.WriteString(PrivateKeyPEM(&priv))
+		privFile.Close()
+
 		return
 	}
 

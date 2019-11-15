@@ -83,8 +83,8 @@ func createGCMEncryptionWithAES(password []byte) cipher.AEAD {
 	return gcm
 }
 
-func EncryptAsymmetric(message []byte, key rsa.PublicKey) []byte {
-	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, &key, message, nil)
+func EncryptAsymmetric(message []byte, key *rsa.PublicKey) []byte {
+	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, key, message, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -101,10 +101,10 @@ func DecryptSymmetric(data []byte, nonceSize int, password []byte) []byte {
 	return plain
 }
 
-func DecryptAsymmetric(message []byte, key rsa.PrivateKey) []byte {
-	plaintext, err := rsa.DecryptOAEP(sha256.New(), nil, &key, message, nil)
+func DecryptAsymmetric(message []byte, key *rsa.PrivateKey) []byte {
+	plaintext, err := rsa.DecryptOAEP(sha256.New(), nil, key, message, nil)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 	return plaintext
 }
@@ -116,7 +116,7 @@ type EncryptedData struct {
 	NonceSize         int
 }
 
-func Encrypt(data []byte, key rsa.PublicKey) []byte {
+func Encrypt(data []byte, key *rsa.PublicKey) []byte {
 	password, nonceSize, data := EncryptSymmetric(data)
 	encryptedPassword := EncryptAsymmetric(password, key)
 
@@ -130,51 +130,25 @@ func Encrypt(data []byte, key rsa.PublicKey) []byte {
 	return buffer.Bytes()
 }
 
+func Decrypt(data []byte, key *rsa.PrivateKey) []byte {
+	dec := gob.NewDecoder(bytes.NewReader(data))
+	var ed EncryptedData
+	err := dec.Decode(&ed)
+	if err != nil {
+		panic(err)
+	}
+
+	password := DecryptAsymmetric(ed.EncryptedPassword, key)
+	decryptedPlaintext := DecryptSymmetric(ed.Data, ed.NonceSize, password)
+	return decryptedPlaintext
+}
+
 func main() {
-	pub, _ := GenerateKey(1024)
-	//
-	//password, nonceSize, data := EncryptSymmetric([]byte("Michael"))
-	//fmt.Println(password, nonceSize, data)
-	//
-	//ciphertext := EncryptAsymmetric(password, pub)
-	//fmt.Println(ciphertext)
-	//
-	//// data, nonceSize, encryptedPassword
-	//
-	//plaintext := DecryptAsymmetric(ciphertext, key)
-	//fmt.Println(plaintext)
-	//
-	//submittedMessage := DecryptSymmetric(data, nonceSize, plaintext)
-	//fmt.Println(string(submittedMessage))
+	pub, priv := GenerateKey(1024)
 
-	// 17
-	//e := EncryptedData{
-	//	[]byte("Hello"),    // 5
-	//	[]byte("Password"), // 8
-	//	10,                 // 4
-	//}
-	//
-	//fmt.Println(e)
-	//
-	//var buffer bytes.Buffer
-	//enc := gob.NewEncoder(&buffer)
-	//err := enc.Encode(e)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	////fmt.Println(buffer.Bytes())
-	////fmt.Println(len(buffer.Bytes()))
-	//
-	//dec := gob.NewDecoder(&buffer)
-	//var r EncryptedData
-	//err = dec.Decode(&r)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//fmt.Println(r)
-	//fmt.Println(string(r.Data))
-
-	b := Encrypt([]byte("Hello, world!"), pub)
+	b := Encrypt([]byte("Hello, world!"), &pub)
 	fmt.Println(b)
+
+	message := Decrypt(b, &priv)
+	fmt.Println(string(message))
 }

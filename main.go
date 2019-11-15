@@ -14,6 +14,10 @@ import (
 	"io"
 )
 
+// TODO Data structures
+// TODO Comments
+// TODO CLI
+
 func NewRandomPassword() []byte {
 	password := make([]byte, 32)
 	_, err := rand.Reader.Read(password)

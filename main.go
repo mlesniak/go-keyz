@@ -138,7 +138,6 @@ func main() {
 
 	fmt.Println(e)
 
-	// TODO ML Add serialization
 	var buffer bytes.Buffer
 	enc := gob.NewEncoder(&buffer)
 	err := enc.Encode(e)

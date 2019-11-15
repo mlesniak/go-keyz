@@ -107,45 +107,12 @@ func DecryptAsymmetric(message []byte, key rsa.PrivateKey) []byte {
 func main() {
 	pub, key := GenerateKey(1024)
 
-	//publicPEM := PublicKeyPEM(pub)
-	//privatePEM := PrivateKeyPEM(key)
-
 	password, nonceSize, data := EncryptSymmetric([]byte("Michael"))
 	fmt.Println(password, nonceSize, data)
 
-	//nonce := make([]byte, gcm.NonceSize())
-	//io.ReadFull(rng, nonce)
-	//data = gcm.Seal(nonce, nonce, data, nil)
-	//fmt.Println(data)
-
-	// Demo: decrypt directly
-	//fmt.Println("--- AES data (decrypted)")
-	//nonce, data := data[:nonceSize], data[nonceSize:]
-	//plain, err := gcm.Open(nil, nonce, data, nil)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//fmt.Println(string(plain))
-
-	// EncryptSymmetric password (for large messages) using public key.
-	//fmt.Println("--- Encrypting")
-	//secretMessage := password
-	//ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, &pub, secretMessage, nil)
-	//if err != nil {
-	//	panic(err)
-	//	return
-	//}
 	ciphertext := EncryptAsymmetric(password, pub)
 	fmt.Println(ciphertext)
 
-	// Decrypt password using private key.
-	//fmt.Println("--- Decrypting")
-	//plaintext, err := rsa.DecryptOAEP(sha256.New(), nil, &key, ciphertext, nil)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
 	plaintext := DecryptAsymmetric(ciphertext, key)
 	fmt.Println(plaintext)
 

@@ -11,7 +11,6 @@ import (
 	"encoding/gob"
 	"encoding/pem"
 	"flag"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -59,7 +58,6 @@ func PrivateKeyPEM(key *rsa.PrivateKey) string {
 
 func ReadPrivateKey(data []byte) *rsa.PrivateKey {
 	block, _ := pem.Decode(data)
-	fmt.Println(block)
 
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
@@ -178,10 +176,12 @@ func main() {
 	//fmt.Println(string(message))
 
 	var keygen bool
-	flag.BoolVar(&keygen, "k", false, "Create a new key pair")
 	var encrypt bool
-	flag.BoolVar(&encrypt, "e", false, "Encrypt from stdin")
+	var decrypt bool
 	var publicKeyName string
+	flag.BoolVar(&keygen, "k", false, "Create a new key pair")
+	flag.BoolVar(&encrypt, "e", false, "Encrypt from stdin")
+	flag.BoolVar(&decrypt, "d", false, "Decrypt from stdin")
 	flag.StringVar(&publicKeyName, "p", "", "Public key file name for encryption")
 	flag.Parse()
 
@@ -202,6 +202,22 @@ func main() {
 		privFile.WriteString(PrivateKeyPEM(&priv))
 		privFile.Close()
 
+		return
+	}
+
+	if decrypt {
+		pemPrivateKey, err := ioutil.ReadFile("private.key")
+		if err != nil {
+			panic(err)
+		}
+		privateKey := ReadPrivateKey(pemPrivateKey)
+		bs, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			panic(err)
+		}
+
+		i := Decrypt(bs, privateKey)
+		os.Stdout.Write(i)
 		return
 	}
 

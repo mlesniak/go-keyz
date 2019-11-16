@@ -19,6 +19,7 @@ import (
 // TODO Data structures
 // TODO Comments
 // TODO CLI
+// TODO Constants for names
 
 func NewRandomPassword() []byte {
 	password := make([]byte, 32)
@@ -37,9 +38,13 @@ func GenerateKey(bitSize int) (rsa.PublicKey, rsa.PrivateKey) {
 }
 
 func PublicKeyPEM(key *rsa.PublicKey) string {
+	bs, err := x509.MarshalPKIXPublicKey(key)
+	if err != nil {
+		panic(err)
+	}
 	publicBlock := &pem.Block{
 		Type:  "PUBLIC KEY",
-		Bytes: x509.MarshalPKCS1PublicKey(key),
+		Bytes: bs,
 	}
 	var buffer bytes.Buffer
 	pem.Encode(&buffer, publicBlock)
@@ -48,7 +53,7 @@ func PublicKeyPEM(key *rsa.PublicKey) string {
 
 func PrivateKeyPEM(key *rsa.PrivateKey) string {
 	publicBlock := &pem.Block{
-		Type:  "PRIVATE KEY",
+		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(key),
 	}
 	var buffer bytes.Buffer
@@ -69,12 +74,17 @@ func ReadPrivateKey(data []byte) *rsa.PrivateKey {
 
 func ReadPublicKey(data []byte) *rsa.PublicKey {
 	block, _ := pem.Decode(data)
-	key, err := x509.ParsePKCS1PublicKey(block.Bytes)
+	//key, err := x509.ParsePKCS1PublicKey(block.Bytes)
+	key, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
 		panic(err)
 	}
+	rsaKey, ok := key.(*rsa.PublicKey)
+	if !ok {
+		panic(err)
+	}
 
-	return key
+	return rsaKey
 }
 
 func EncryptSymmetric(message []byte) (password []byte, nonceSize int, data []byte) {

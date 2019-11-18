@@ -181,11 +181,7 @@ func main() {
 	var encrypt bool
 	var decrypt bool
 	var publicKeyName string
-	flag.BoolVar(&keygen, "k", false, "Create a new key pair")
-	flag.BoolVar(&encrypt, "e", false, "Encrypt from stdin")
-	flag.BoolVar(&decrypt, "d", false, "Decrypt from stdin")
-	flag.StringVar(&publicKeyName, "p", "", "Public key file name for encryption")
-	flag.Parse()
+	parseFlags(&keygen, &encrypt, &decrypt, &publicKeyName)
 
 	if keygen {
 		pub, priv := GenerateKey(1024)
@@ -247,4 +243,12 @@ func main() {
 	}
 
 	flag.Usage()
+}
+
+func parseFlags(keygen *bool, encrypt *bool, decrypt *bool, publicKeyName *string) {
+	flag.BoolVar(keygen, "k", false, "Create a new key pair")
+	flag.BoolVar(encrypt, "e", false, "Encrypt from stdin")
+	flag.BoolVar(decrypt, "d", false, "Decrypt from stdin")
+	flag.StringVar(publicKeyName, "p", "", "Public key file name for encryption")
+	flag.Parse()
 }

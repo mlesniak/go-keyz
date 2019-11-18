@@ -18,7 +18,7 @@ import (
 // TODO CLI
 // TODO Constants for names
 
-func NewRandomPassword() []byte {
+func newRandomPassword() []byte {
 	password := make([]byte, 32)
 	_, err := rand.Reader.Read(password)
 	if err != nil {
@@ -34,7 +34,7 @@ func GenerateKey(bitSize int) (rsa.PublicKey, rsa.PrivateKey) {
 	return pub, *key
 }
 
-func PublicKeyPEM(key *rsa.PublicKey) string {
+func publicKeyPEM(key *rsa.PublicKey) string {
 	bs, err := x509.MarshalPKIXPublicKey(key)
 	if err != nil {
 		panic(err)
@@ -48,7 +48,7 @@ func PublicKeyPEM(key *rsa.PublicKey) string {
 	return buffer.String()
 }
 
-func PrivateKeyPEM(key *rsa.PrivateKey) string {
+func privateKeyPEM(key *rsa.PrivateKey) string {
 	publicBlock := &pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(key),
@@ -58,7 +58,7 @@ func PrivateKeyPEM(key *rsa.PrivateKey) string {
 	return buffer.String()
 }
 
-func ReadPrivateKey(data []byte) *rsa.PrivateKey {
+func readPrivateKey(data []byte) *rsa.PrivateKey {
 	block, _ := pem.Decode(data)
 
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
@@ -69,7 +69,7 @@ func ReadPrivateKey(data []byte) *rsa.PrivateKey {
 	return key
 }
 
-func ReadPublicKey(data []byte) *rsa.PublicKey {
+func readPublicKey(data []byte) *rsa.PublicKey {
 	block, _ := pem.Decode(data)
 	//key, err := x509.ParsePKCS1PublicKey(block.Bytes)
 	key, err := x509.ParsePKIXPublicKey(block.Bytes)
@@ -84,8 +84,8 @@ func ReadPublicKey(data []byte) *rsa.PublicKey {
 	return rsaKey
 }
 
-func EncryptSymmetric(message []byte) (password []byte, nonceSize int, data []byte) {
-	password = NewRandomPassword()
+func encryptSymmetric(message []byte) (password []byte, nonceSize int, data []byte) {
+	password = newRandomPassword()
 
 	gcm := createGCMEncryptionWithAES(password)
 
@@ -94,7 +94,7 @@ func EncryptSymmetric(message []byte) (password []byte, nonceSize int, data []by
 	nonce := make([]byte, nonceSize)
 	io.ReadFull(rand.Reader, nonce)
 
-	// EncryptSymmetric
+	// encryptSymmetric
 	data = gcm.Seal(nonce, nonce, message, nil)
 	return
 }
@@ -113,7 +113,7 @@ func createGCMEncryptionWithAES(password []byte) cipher.AEAD {
 	return gcm
 }
 
-func EncryptAsymmetric(message []byte, key *rsa.PublicKey) []byte {
+func encryptAsymmetric(message []byte, key *rsa.PublicKey) []byte {
 	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, key, message, nil)
 	if err != nil {
 		panic(err)
@@ -121,7 +121,7 @@ func EncryptAsymmetric(message []byte, key *rsa.PublicKey) []byte {
 	return ciphertext
 }
 
-func DecryptSymmetric(data []byte, nonceSize int, password []byte) []byte {
+func decryptSymmetric(data []byte, nonceSize int, password []byte) []byte {
 	nonce, message := data[:nonceSize], data[nonceSize:]
 	gcm := createGCMEncryptionWithAES(password)
 	plain, err := gcm.Open(nil, nonce, message, nil)
@@ -131,7 +131,7 @@ func DecryptSymmetric(data []byte, nonceSize int, password []byte) []byte {
 	return plain
 }
 
-func DecryptAsymmetric(message []byte, key *rsa.PrivateKey) []byte {
+func decryptAsymmetric(message []byte, key *rsa.PrivateKey) []byte {
 	plaintext, err := rsa.DecryptOAEP(sha256.New(), nil, key, message, nil)
 	if err != nil {
 		panic(err)
@@ -140,17 +140,17 @@ func DecryptAsymmetric(message []byte, key *rsa.PrivateKey) []byte {
 }
 
 // Message in -> encrypted data out
-type EncryptedData struct {
+type encryptedData struct {
 	Data              []byte // Protected by AES.
 	EncryptedPassword []byte // Protected by private key.
 	NonceSize         int
 }
 
 func Encrypt(data []byte, key *rsa.PublicKey) []byte {
-	password, nonceSize, data := EncryptSymmetric(data)
-	encryptedPassword := EncryptAsymmetric(password, key)
+	password, nonceSize, data := encryptSymmetric(data)
+	encryptedPassword := encryptAsymmetric(password, key)
 
-	ed := EncryptedData{data, encryptedPassword, nonceSize}
+	ed := encryptedData{data, encryptedPassword, nonceSize}
 	var buffer bytes.Buffer
 	enc := gob.NewEncoder(&buffer)
 	err := enc.Encode(ed)
@@ -162,13 +162,13 @@ func Encrypt(data []byte, key *rsa.PublicKey) []byte {
 
 func Decrypt(data []byte, key *rsa.PrivateKey) []byte {
 	dec := gob.NewDecoder(bytes.NewReader(data))
-	var ed EncryptedData
+	var ed encryptedData
 	err := dec.Decode(&ed)
 	if err != nil {
 		panic(err)
 	}
 
-	password := DecryptAsymmetric(ed.EncryptedPassword, key)
-	decryptedPlaintext := DecryptSymmetric(ed.Data, ed.NonceSize, password)
+	password := decryptAsymmetric(ed.EncryptedPassword, key)
+	decryptedPlaintext := decryptSymmetric(ed.Data, ed.NonceSize, password)
 	return decryptedPlaintext
 }

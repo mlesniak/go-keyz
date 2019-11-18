@@ -31,26 +31,26 @@ func generateKeys() {
 	if err != nil {
 		panic(err)
 	}
-	pubFile.WriteString(PublicKeyPEM(&pub))
+	pubFile.WriteString(publicKeyPEM(&pub))
 	pubFile.Close()
 	privFile, err := os.Create("private.key")
 	if err != nil {
 		panic(err)
 	}
-	privFile.WriteString(PrivateKeyPEM(&priv))
+	privFile.WriteString(privateKeyPEM(&priv))
 	privFile.Close()
 }
 
 func startEncryption(publicKeyName string) {
-	//if publicKeyName == "" {
-	//	flag.Usage()
-	//	return
-	//}
+	if publicKeyName == "" {
+		flag.Usage()
+		return
+	}
 	pemPublicKey, err := ioutil.ReadFile(publicKeyName)
 	if err != nil {
 		panic(err)
 	}
-	publicKey := ReadPublicKey(pemPublicKey)
+	publicKey := readPublicKey(pemPublicKey)
 	bs, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		panic(err)
@@ -64,7 +64,7 @@ func startDecryption() {
 	if err != nil {
 		panic(err)
 	}
-	privateKey := ReadPrivateKey(pemPrivateKey)
+	privateKey := readPrivateKey(pemPrivateKey)
 	bs, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		panic(err)

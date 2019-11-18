@@ -15,6 +15,7 @@ const privateKeyName = "private.key"
 // cli defines the data structure which is filled by parseFlags to determine the actual action.
 type cli struct {
 	keygen        bool
+	bitSize       int
 	encrypt       bool
 	decrypt       bool
 	publicKeyName string
@@ -26,7 +27,7 @@ func main() {
 
 	switch {
 	case cli.keygen:
-		generateKeys()
+		generateKeys(cli.bitSize)
 	case cli.encrypt:
 		startEncryption(cli.publicKeyName)
 	case cli.decrypt:
@@ -37,8 +38,8 @@ func main() {
 }
 
 // generateKeys generates a new key pair and stores them in standard file locations.
-func generateKeys() {
-	pub, priv := GenerateKey(1024)
+func generateKeys(bitSize int) {
+	pub, priv := GenerateKey(bitSize)
 	pubFile, err := os.Create(publicKeyName)
 	if err != nil {
 		panic(err)
@@ -91,6 +92,7 @@ func startDecryption() {
 func parseFlags() cli {
 	var cli cli
 	flag.BoolVar(&cli.keygen, "k", false, "Create a new key pair")
+	flag.IntVar(&cli.bitSize, "s", 1024, "Bitsize of the generated key pair")
 	flag.BoolVar(&cli.encrypt, "e", false, "Encrypt from stdin")
 	flag.BoolVar(&cli.decrypt, "d", false, "Decrypt from stdin")
 	flag.StringVar(&cli.publicKeyName, "p", "", "Public key file name for encryption")

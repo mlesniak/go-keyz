@@ -12,20 +12,24 @@ const publicKeyName = "public.key"
 // Name of the default private key for key generation and decryption.
 const privateKeyName = "private.key"
 
+// cli defines the data structure which is filled by parseFlags to determine the actual action.
+type cli struct {
+	keygen        bool
+	encrypt       bool
+	decrypt       bool
+	publicKeyName string
+}
+
 // main handles CLI parsing and calls the correct function.
 func main() {
-	var keygen bool
-	var encrypt bool
-	var decrypt bool
-	var publicKeyName string
-	parseFlags(&keygen, &encrypt, &decrypt, &publicKeyName)
+	cli := parseFlags()
 
 	switch {
-	case keygen:
+	case cli.keygen:
 		generateKeys()
-	case encrypt:
-		startEncryption(publicKeyName)
-	case decrypt:
+	case cli.encrypt:
+		startEncryption(cli.publicKeyName)
+	case cli.decrypt:
 		startDecryption()
 	default:
 		flag.Usage()
@@ -84,10 +88,12 @@ func startDecryption() {
 }
 
 // parseFlags defines all relevant flags and their default values.
-func parseFlags(keygen *bool, encrypt *bool, decrypt *bool, publicKeyName *string) {
-	flag.BoolVar(keygen, "k", false, "Create a new key pair")
-	flag.BoolVar(encrypt, "e", false, "Encrypt from stdin")
-	flag.BoolVar(decrypt, "d", false, "Decrypt from stdin")
-	flag.StringVar(publicKeyName, "p", "", "Public key file name for encryption")
+func parseFlags() cli {
+	var cli cli
+	flag.BoolVar(&cli.keygen, "k", false, "Create a new key pair")
+	flag.BoolVar(&cli.encrypt, "e", false, "Encrypt from stdin")
+	flag.BoolVar(&cli.decrypt, "d", false, "Decrypt from stdin")
+	flag.StringVar(&cli.publicKeyName, "p", "", "Public key file name for encryption")
 	flag.Parse()
+	return cli
 }

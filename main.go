@@ -177,14 +177,6 @@ func Decrypt(data []byte, key *rsa.PrivateKey) []byte {
 }
 
 func main() {
-	//pub, priv := GenerateKey(1024)
-	//
-	//b := Encrypt([]byte("Hello, world!"), &pub)
-	//fmt.Println(b)
-	//
-	//message := Decrypt(b, &priv)
-	//fmt.Println(string(message))
-
 	var keygen bool
 	var encrypt bool
 	var decrypt bool

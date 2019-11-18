@@ -9,8 +9,6 @@
 // function returns a non-nil error value.
 package main
 
-// TODO ML Split this up using data structures and corresponding functions?
-
 import (
 	"bytes"
 	"crypto/aes"

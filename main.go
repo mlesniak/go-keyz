@@ -183,7 +183,8 @@ func main() {
 	var publicKeyName string
 	parseFlags(&keygen, &encrypt, &decrypt, &publicKeyName)
 
-	if keygen {
+	switch {
+	case keygen:
 		pub, priv := GenerateKey(1024)
 
 		pubFile, err := os.Create("public.key")
@@ -199,27 +200,7 @@ func main() {
 		}
 		privFile.WriteString(PrivateKeyPEM(&priv))
 		privFile.Close()
-
-		return
-	}
-
-	if decrypt {
-		pemPrivateKey, err := ioutil.ReadFile("private.key")
-		if err != nil {
-			panic(err)
-		}
-		privateKey := ReadPrivateKey(pemPrivateKey)
-		bs, err := ioutil.ReadAll(os.Stdin)
-		if err != nil {
-			panic(err)
-		}
-
-		i := Decrypt(bs, privateKey)
-		os.Stdout.Write(i)
-		return
-	}
-
-	if encrypt {
+	case encrypt:
 		if publicKeyName == "" {
 			flag.Usage()
 			return
@@ -238,11 +219,23 @@ func main() {
 
 		i := Encrypt(bs, publicKey)
 		os.Stdout.Write(i)
+	case decrypt:
+		pemPrivateKey, err := ioutil.ReadFile("private.key")
+		if err != nil {
+			panic(err)
+		}
+		privateKey := ReadPrivateKey(pemPrivateKey)
+		bs, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			panic(err)
+		}
 
+		i := Decrypt(bs, privateKey)
+		os.Stdout.Write(i)
 		return
+	default:
+		flag.Usage()
 	}
-
-	flag.Usage()
 }
 
 func parseFlags(keygen *bool, encrypt *bool, decrypt *bool, publicKeyName *string) {

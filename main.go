@@ -6,6 +6,13 @@ import (
 	"os"
 )
 
+// Name of the default public key for key generation.
+const publicKeyName = "public.key"
+
+// Name of the default private key for key generation and decryption.
+const privateKeyName = "private.key"
+
+// main handles CLI parsing and calls the correct function.
 func main() {
 	var keygen bool
 	var encrypt bool
@@ -25,15 +32,16 @@ func main() {
 	}
 }
 
+// generateKeys generates a new key pair and stores them in standard file locations.
 func generateKeys() {
 	pub, priv := GenerateKey(1024)
-	pubFile, err := os.Create("public.key")
+	pubFile, err := os.Create(publicKeyName)
 	if err != nil {
 		panic(err)
 	}
 	pubFile.WriteString(publicKeyPEM(&pub))
 	pubFile.Close()
-	privFile, err := os.Create("private.key")
+	privFile, err := os.Create(privateKeyName)
 	if err != nil {
 		panic(err)
 	}
@@ -41,6 +49,7 @@ func generateKeys() {
 	privFile.Close()
 }
 
+// startEncryption starts encryption of stdin using the provided public key name.
 func startEncryption(publicKeyName string) {
 	if publicKeyName == "" {
 		flag.Usage()
@@ -59,8 +68,9 @@ func startEncryption(publicKeyName string) {
 	os.Stdout.Write(i)
 }
 
+// startDecryption decrypts stdin (and output to stdout) using the previously generated private key.
 func startDecryption() {
-	pemPrivateKey, err := ioutil.ReadFile("private.key")
+	pemPrivateKey, err := ioutil.ReadFile(privateKeyName)
 	if err != nil {
 		panic(err)
 	}
@@ -73,6 +83,7 @@ func startDecryption() {
 	os.Stdout.Write(i)
 }
 
+// parseFlags defines all relevant flags and their default values.
 func parseFlags(keygen *bool, encrypt *bool, decrypt *bool, publicKeyName *string) {
 	flag.BoolVar(keygen, "k", false, "Create a new key pair")
 	flag.BoolVar(encrypt, "e", false, "Encrypt from stdin")

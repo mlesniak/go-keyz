@@ -1,7 +1,5 @@
 package main
 
-// TODO ML Write happy flow unit test with predefined public key and private key
-
 import (
 	"flag"
 	"io/ioutil"

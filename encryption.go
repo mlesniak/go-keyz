@@ -18,9 +18,13 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"io"
+	"log"
 )
 
 const passwordLength = 32
+
+// Default source for randomess. Can be fixed for unit tests using randReader(io.Readder).
+var randReader = rand.Reader
 
 // Message in -> encrypted data out
 type encryptedData struct {
@@ -31,8 +35,7 @@ type encryptedData struct {
 
 // GenerateKey creates a new rsa public key pair with the given bit size.
 func GenerateKey(bitSize int) (rsa.PublicKey, rsa.PrivateKey) {
-	rng := rand.Reader
-	key, _ := rsa.GenerateKey(rng, bitSize)
+	key, _ := rsa.GenerateKey(randReader, bitSize)
 	pub := key.PublicKey
 	return pub, *key
 }
@@ -62,7 +65,7 @@ func encryptSymmetric(message []byte) (password []byte, nonceSize int, data []by
 	// Create random nonce and prepend it to the message.
 	nonceSize = gcm.NonceSize()
 	nonce := make([]byte, nonceSize)
-	io.ReadFull(rand.Reader, nonce)
+	io.ReadFull(randReader, nonce)
 
 	// encryptSymmetric
 	data = gcm.Seal(nonce, nonce, message, nil)
@@ -72,7 +75,7 @@ func encryptSymmetric(message []byte) (password []byte, nonceSize int, data []by
 // newRandomPassword returns a new password with the given password length.
 func newRandomPassword(passwordLength int) []byte {
 	password := make([]byte, passwordLength)
-	_, err := rand.Reader.Read(password)
+	_, err := randReader.Read(password)
 	if err != nil {
 		panic(err)
 	}
@@ -81,7 +84,7 @@ func newRandomPassword(passwordLength int) []byte {
 
 // encryptAsymmetric encrypts a message using a public key.
 func encryptAsymmetric(message []byte, key *rsa.PublicKey) []byte {
-	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, key, message, nil)
+	ciphertext, err := rsa.EncryptOAEP(sha256.New(), randReader, key, message, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -135,4 +138,10 @@ func createGCMEncryptionWithAES(password []byte) cipher.AEAD {
 		panic(err)
 	}
 	return gcm
+}
+
+// fixRandomReader sets a new random reader which is used for retrieving random values. This is useful for unit tests.
+func fixRandomReader(reader io.Reader) {
+	log.Println("Using non-default random source. Running in a test?")
+	randReader = reader
 }

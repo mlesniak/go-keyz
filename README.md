@@ -1,4 +1,5 @@
 [![Build Status](https://github.com/mlesniak/go-keyz/workflows/Go/badge.svg)](https://github.com/mlesniak/go-keyz/actions?query=workflow%3AGo)
+[![Code of Conduct](https://img.shields.io/badge/%E2%9D%A4-code%20of%20conduct-orange.svg?style=flat)](CODE_OF_CONDUCT.md)
 
 # Overview
 

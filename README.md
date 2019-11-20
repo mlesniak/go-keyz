@@ -1,7 +1,7 @@
 # Overview
 
 This is a simple example of using standard go libraries ("batteries included") to encrypt and decrypt files with
-public key cryptography using [RSA](https://en.wikipedia.org/wiki/RSA_(cryptosystem).
+public key cryptography using [RSA](https://en.wikipedia.org/wiki/RSA_(cryptosystem)).
 
 ## Compile, Build and Test
 

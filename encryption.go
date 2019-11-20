@@ -21,16 +21,16 @@ import (
 	"log"
 )
 
-const passwordLength = 32
+const keyLength = 32
 
 // Default source for randomess. Can be fixed for unit tests using randReader(io.Readder).
 var randReader = rand.Reader
 
 // Message in -> encrypted data out
 type encryptedData struct {
-	Data              []byte // Protected by AES.
-	EncryptedPassword []byte // Protected by private key.
-	NonceSize         int    // Necessary for AES randomness.
+	Data         []byte // Protected by AES.
+	EncryptedKey []byte // Protected by private key.
+	NonceSize    int    // Necessary for AES randomness.
 }
 
 // GenerateKey creates a new rsa public key pair with the given bit size.
@@ -43,10 +43,10 @@ func GenerateKey(bitSize int) (rsa.PublicKey, rsa.PrivateKey) {
 // Encrypt a byte slice using the given public key (see package description for actual process) and returns the
 // encrypted datawhich can be decrypted using Decrypt().
 func Encrypt(data []byte, key *rsa.PublicKey) []byte {
-	password, nonceSize, data := encryptSymmetric(data)
-	encryptedPassword := encryptAsymmetric(password, key)
+	aesKey, nonceSize, data := encryptSymmetric(data)
+	encryptedKey := encryptAsymmetric(aesKey, key)
 
-	ed := encryptedData{data, encryptedPassword, nonceSize}
+	ed := encryptedData{data, encryptedKey, nonceSize}
 	var buffer bytes.Buffer
 	enc := gob.NewEncoder(&buffer)
 	err := enc.Encode(ed)
@@ -56,11 +56,11 @@ func Encrypt(data []byte, key *rsa.PublicKey) []byte {
 	return buffer.Bytes()
 }
 
-// encryptSymmetric encryptes the message using a randomly generated password.
-func encryptSymmetric(message []byte) (password []byte, nonceSize int, data []byte) {
-	password = newRandomPassword(passwordLength)
+// encryptSymmetric encryptes the message using a randomly generated symmetric key.
+func encryptSymmetric(message []byte) (symmetricKey []byte, nonceSize int, data []byte) {
+	symmetricKey = newRandomKey(keyLength)
 
-	gcm := createGCMEncryptionWithAES(password)
+	gcm := createGCMEncryptionWithAES(symmetricKey)
 
 	// Create random nonce and prepend it to the message.
 	nonceSize = gcm.NonceSize()
@@ -72,14 +72,14 @@ func encryptSymmetric(message []byte) (password []byte, nonceSize int, data []by
 	return
 }
 
-// newRandomPassword returns a new password with the given password length.
-func newRandomPassword(passwordLength int) []byte {
-	password := make([]byte, passwordLength)
-	_, err := randReader.Read(password)
+// newRandomKey returns a new key with the given length (in bytes), i.e. multiply by 8 for bits.
+func newRandomKey(keyLength int) []byte {
+	key := make([]byte, keyLength)
+	_, err := randReader.Read(key)
 	if err != nil {
 		panic(err)
 	}
-	return password
+	return key
 }
 
 // encryptAsymmetric encrypts a message using a public key.
@@ -100,8 +100,8 @@ func Decrypt(data []byte, key *rsa.PrivateKey) []byte {
 		panic(err)
 	}
 
-	password := decryptAsymmetric(ed.EncryptedPassword, key)
-	decryptedPlaintext := decryptSymmetric(ed.Data, ed.NonceSize, password)
+	symmetricKey := decryptAsymmetric(ed.EncryptedKey, key)
+	decryptedPlaintext := decryptSymmetric(ed.Data, ed.NonceSize, symmetricKey)
 	return decryptedPlaintext
 }
 
@@ -115,9 +115,9 @@ func decryptAsymmetric(message []byte, key *rsa.PrivateKey) []byte {
 }
 
 // decryptSymmetric decrypts a message.
-func decryptSymmetric(data []byte, nonceSize int, password []byte) []byte {
+func decryptSymmetric(data []byte, nonceSize int, key []byte) []byte {
 	nonce, message := data[:nonceSize], data[nonceSize:]
-	gcm := createGCMEncryptionWithAES(password)
+	gcm := createGCMEncryptionWithAES(key)
 	plain, err := gcm.Open(nil, nonce, message, nil)
 	if err != nil {
 		panic(err)
@@ -126,9 +126,9 @@ func decryptSymmetric(data []byte, nonceSize int, password []byte) []byte {
 }
 
 // createGCMEncryptionWithAES creates a GCM cipher which can be used to encrypt a stream of blocks using AES.
-func createGCMEncryptionWithAES(password []byte) cipher.AEAD {
-	// Create AES instance using random password.
-	algorithm, err := aes.NewCipher(password)
+func createGCMEncryptionWithAES(key []byte) cipher.AEAD {
+	// Create AES instance using random key.
+	algorithm, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err)
 	}

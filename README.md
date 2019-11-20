@@ -1,3 +1,5 @@
+[![Build Status](https://github.com/mlesniak/go-keyz/workflows/Go/badge.svg)](https://github.com/mlesniak/go-keyz/actions?query=workflow%3AGo)
+
 # Overview
 
 This is a simple example of using standard go libraries ("batteries included") to encrypt and decrypt files with

@@ -32,10 +32,11 @@ and to **decrypt** using your private key, use
 
     keyz -d <encrypted-input-file >plaintext-output-file
 
-## Usage for submitting files without exchanging passwords
+## Usage for submitting files over networks using public-key cryptography
 
-`keyz` can be used to submit files over networks using [netcat](https://en.wikipedia.org/wiki/Netcat). On the receiving
-client, start a netcat server on port 1234 which redirects read data to keyz with
+`keyz` can be used to submit files over networks using [netcat](https://en.wikipedia.org/wiki/Netcat) without
+the necessity to exchange passwords. On the receiving client, start a netcat server on port 1234 which redirects read
+data to keyz with
 
     nc -l 1234|keyz -d
 
@@ -45,4 +46,4 @@ and on the sending client submit a file to the server (here: localhost) with
 
 ## License
 
-As always, the source code is licensed under Apache license 2.0.
+As always, the source code is licensed under [Apache license 2.0](https://raw.githubusercontent.com/mlesniak/go-keyz/master/LICENSE).
